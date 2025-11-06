@@ -4,7 +4,7 @@ from torch_geometric.nn import GCNConv, global_mean_pool, DenseGCNConv, DenseGra
 
 
 class GCN(torch.nn.Module):
-    def __init__(self, num_node_features, hidden_channels=128):
+    def __init__(self, num_node_features, hidden_channels=64):
         super(GCN, self).__init__()
         self.conv1 = GCNConv(num_node_features, hidden_channels)
         self.conv2 = GCNConv(hidden_channels, hidden_channels)

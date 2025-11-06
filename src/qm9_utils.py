@@ -87,7 +87,7 @@ class DataLoader(torch.utils.data.DataLoader):
     def __init__(
         self,
         dataset: Dataset | Sequence[BaseData] | DatasetAdapter,
-        batch_size: int = 1,
+        batch_size: int = 1, # TODO: change 3
         shuffle: bool = False,
         follow_batch: list[str] | None = None,
         exclude_keys: list[str] | None = None,
