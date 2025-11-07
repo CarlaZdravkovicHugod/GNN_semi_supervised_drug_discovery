@@ -104,3 +104,43 @@ class GCN3(torch.nn.Module):
         x = self.linear(x)
 
         return x
+    
+
+class GCN4(torch.nn.Module):
+    def __init__(self, num_node_features, hidden_channels=64):
+        super(GCN4, self).__init__()
+        self.conv1 = GCNConv(num_node_features, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels // 2)
+        self.conv3 = GCNConv(hidden_channels // 2, hidden_channels // 4)
+        self.conv4 = GCNConv(hidden_channels // 4, hidden_channels // 2)
+        self.conv5 = GCNConv(hidden_channels // 2, hidden_channels)
+        self.linear = torch.nn.Linear(hidden_channels, 1)
+        # TODO: try another final classifier?
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        # Apply graph convolutions at the node level (keep node structure)
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+
+        x = self.conv3(x, edge_index)
+        x = F.relu(x)
+
+        x = self.conv4(x, edge_index)
+        x = F.relu(x)
+
+        x = self.conv5(x, edge_index)
+        x = F.relu(x)
+
+        # Readout to graph-level representation
+        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+
+        x = F.layer_norm(x, x.size()[1:]) # TODO: consider removing, maybe batch norm is better?
+
+        # Final classifier
+        x = self.linear(x)
+
+        return x
