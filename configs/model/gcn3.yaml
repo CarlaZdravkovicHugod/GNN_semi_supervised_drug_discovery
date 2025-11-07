@@ -1,0 +1,9 @@
+defaults:
+  - _self_
+
+name: gcn3
+
+init:
+  _target_: models.GCN3
+  _partial_: false
+  num_node_features: 11
