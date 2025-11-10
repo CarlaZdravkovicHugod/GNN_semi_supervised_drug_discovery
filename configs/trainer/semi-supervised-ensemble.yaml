@@ -19,7 +19,7 @@ init:
   scheduler:
     _target_: torch.optim.lr_scheduler.StepLR
     _partial_: true
-    step_size: 20 # TODO: change 6
+    step_size: 100 # TODO: change 6
     gamma: 0.95 # TODO: change 7
 
     
