@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# A100 GPU queue, there is also gpua40 and gpua10
-#BSUB -q gpua40
+# V100 GPU queue, there is also gpua40 and gpua10
+#BSUB -q gpuv100
 
 # job name
 #BSUB -J GCN3_HPC
@@ -10,10 +10,10 @@
 #BSUB -n 4
 #BSUB -R "span[hosts=1]"
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -W 24:00
+#BSUB -W 6:00
 
 # at least 32 GB RAM
-#BSUB -R "rusage[mem=16GB]"
+#BSUB -R "rusage[mem=8GB]"
 
 # stdout/stderr files for debugging (%J is substituted for job ID)
 #BSUB -o logs/my_run_%J.out
