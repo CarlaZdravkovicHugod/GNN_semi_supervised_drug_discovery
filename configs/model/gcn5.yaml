@@ -1,0 +1,9 @@
+defaults:
+  - _self_
+
+name: gcn5
+
+init:
+  _target_: models.GCN5
+  _partial_: false
+  num_node_features: 11
