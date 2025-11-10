@@ -19,7 +19,7 @@ class SemiSupervisedEnsemble:
         ema_decay: float = 0.999,
         rampup_epochs: int = 80,
     ):
-        self.device = device
+        self.device = torch.device("mps") if torch.backends.mps.is_available() else device
         self.models = models
 
         # Mean Teacher: create EMA teacher models
@@ -86,7 +86,7 @@ class SemiSupervisedEnsemble:
         
         with torch.no_grad():
             for x, targets in self.val_dataloader:
-                x, targets = x.to(self.device), targets.to(self.device)
+                x, targets = x.to(self.device), targets.to(self.device) # test Apple M2
                 
                 # Ensemble prediction (use teacher if available, otherwise student)
                 if self.use_mean_teacher and self.teacher_models is not None:
@@ -173,7 +173,6 @@ class SemiSupervisedEnsemble:
             summary_dict = {
                 "supervised_loss": supervised_losses_logged,
                 "unsupervised_loss": unsupervised_losses_logged,
-                "unsupervised_weight": current_unsup_weight,
                 "epochs": epoch,
             }
 
@@ -193,3 +192,4 @@ class SemiSupervisedEnsemble:
 
 # TODO: Run on test data as well, ie test on testdata. 
 # TODO: add unsupervised loss component as well. Fx mean teacher
+# TODO: dataset uyamæ qm9 choose predicting variable

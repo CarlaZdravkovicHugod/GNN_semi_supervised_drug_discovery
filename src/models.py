@@ -183,3 +183,139 @@ class GCN5(torch.nn.Module):
         x = self.linear(x)
 
         return x
+    
+
+class GCN6(torch.nn.Module):
+    def __init__(self, num_node_features, hidden_channels=64):
+        super(GCN6, self).__init__()
+        self.conv1 = GCNConv(num_node_features, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.linear = torch.nn.Linear(hidden_channels, 1)
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        # Apply graph convolutions at the node level (keep node structure)
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+
+        # Readout to graph-level representation
+        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+
+        # Final classifier
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = self.linear(x)
+
+        return x
+
+class GCN7(torch.nn.Module):
+    def __init__(self, num_node_features, hidden_channels=64):
+        super(GCN7, self).__init__()
+        self.conv1 = GCNConv(num_node_features, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.linear = torch.nn.Linear(hidden_channels, 1)
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        # Apply graph convolutions at the node level (keep node structure)
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+        x = F.layer_norm(x, x.size()[1:]) 
+
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+        x = F.layer_norm(x, x.size()[1:]) 
+
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+        x = F.layer_norm(x, x.size()[1:]) 
+
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+        x = F.layer_norm(x, x.size()[1:]) 
+        
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+
+        # Readout to graph-level representation
+        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+
+        x = F.layer_norm(x, x.size()[1:]) # TODO: consider removing, maybe batch norm is better?
+
+        # Final classifier
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = self.linear(x)
+
+        return x
+    
+class GCN8(torch.nn.Module):
+    def __init__(self, num_node_features, hidden_channels=64):
+        super(GCN8, self).__init__()
+        self.conv1 = GCNConv(num_node_features, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.linear = torch.nn.Linear(hidden_channels, 1)
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        # Apply graph convolutions at the node level (keep node structure)
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+    
+        for _ in range(5):
+            x = self.conv2(x, edge_index)
+            x = F.relu(x)
+   
+        # Readout to graph-level representation
+        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+
+        x = F.layer_norm(x, x.size()[1:]) # TODO: consider removing, maybe batch norm is better?
+
+        x = F.dropout(x, p=0.5, training=self.training)
+        
+        # Final classifier
+        x = self.linear(x)
+
+        return x
+    
+class GCN9(torch.nn.Module):
+    def __init__(self, num_node_features, hidden_channels=64):
+        super(GCN8, self).__init__()
+        self.conv1 = GCNConv(num_node_features, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.linear = torch.nn.Linear(hidden_channels, 1)
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        # Apply graph convolutions at the node level (keep node structure)
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+        
+        x = F.layer_norm(x, x.size()[1:]) # TODO: consider removing, maybe batch norm is better?
+        x = F.dropout(x, p=0.5, training=self.training)
+    
+        for _ in range(5):
+            x = self.conv2(x, edge_index)
+            x = F.relu(x)
+   
+        # Readout to graph-level representation
+        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+
+        x = F.layer_norm(x, x.size()[1:]) # TODO: consider removing, maybe batch norm is better?
+
+        x = F.dropout(x, p=0.5, training=self.training)
+        
+        # Final classifier
+        x = self.linear(x)
+
+        return x
