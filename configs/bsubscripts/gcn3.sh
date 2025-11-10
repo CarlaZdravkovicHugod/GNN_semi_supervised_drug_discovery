@@ -24,4 +24,4 @@
 source .venv/bin/activate
 export WAND_PROJECT_NAME="carlahugod-danmarks-tekniske-universitet-dtu/GNN_semi_supervised"
 export WANDB_API_KEY='c2965a6c460753628c9a1c3073ba07c83071c161'
-PYTHONPATH="." python src/run.py --model=gcn3
+PYTHONPATH="." python src/run.py --model=gcn5
