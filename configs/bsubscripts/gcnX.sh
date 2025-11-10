@@ -1,16 +1,16 @@
 #!/bin/sh
 
 # A100 GPU queue, there is also gpua40 and gpua10
-#BSUB -q gpua40
+#BSUB -q gpua100
 
 # job name
-#BSUB -J GCN3_HPC
+#BSUB -J GCNX_HPC
 
-# 4 cpus, 1 machine, 1 gpu, 24 hours (the max)
+# 4 cpus, 1 machine, 1 gpu, 12 hours (the max is 24)
 #BSUB -n 4
 #BSUB -R "span[hosts=1]"
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -W 24:00
+#BSUB -W 12:00
 
 # at least 32 GB RAM
 #BSUB -R "rusage[mem=16GB]"
@@ -24,4 +24,4 @@
 source .venv/bin/activate
 export WAND_PROJECT_NAME="carlahugod-danmarks-tekniske-universitet-dtu/GNN_semi_supervised"
 export WANDB_API_KEY='c2965a6c460753628c9a1c3073ba07c83071c161'
-PYTHONPATH="." python src/run.py --model=gcn5
+PYTHONPATH="." python src/run.py --model=gcn3
