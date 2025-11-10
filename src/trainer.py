@@ -2,7 +2,6 @@ from functools import partial
 
 import numpy as np
 import torch
-from torch.optim import lr_scheduler
 from tqdm import tqdm
 
 class SemiSupervisedEnsemble:
