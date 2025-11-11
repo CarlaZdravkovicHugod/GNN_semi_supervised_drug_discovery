@@ -1,5 +1,5 @@
 from functools import partial
-
+import logging
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -17,7 +17,7 @@ class SemiSupervisedEnsemble:
         unsupervised_weight: float = 0.0,
         use_mean_teacher: bool = True,
         ema_decay: float = 0.999,
-        rampup_epochs: int = 80,
+        rampup_scheduler=None,
     ):
         self.device = torch.device("mps") if torch.backends.mps.is_available() else device
         self.models = models
@@ -29,12 +29,30 @@ class SemiSupervisedEnsemble:
             self.teacher_models = [self._create_ema_model(model) for model in self.models]
         else:
             self.teacher_models = None
+            logging.info('Mean Teacher not used')
 
         # Optim related things
         self.supervised_criterion = supervised_criterion
         all_params = [p for m in self.models for p in m.parameters()]
         self.optimizer = optimizer(params=all_params)
         self.scheduler = scheduler(optimizer=self.optimizer)
+        
+        # Rampup scheduler for unsupervised weight
+        # Create a dummy optimizer with a single parameter to use with the scheduler
+        self.max_unsupervised_weight = unsupervised_weight
+        self.current_unsup_weight_param = torch.nn.Parameter(torch.tensor(0.0))
+        self.rampup_optimizer = torch.optim.SGD([self.current_unsup_weight_param], lr=0.1)
+        if rampup_scheduler is not None:
+            self.rampup_scheduler = rampup_scheduler(optimizer=self.rampup_optimizer)
+        else:
+            # Default: linear ramp-up over 80 epochs
+            logging.info('Using default linear ramp-up scheduler for unsupervised weight over 80 epochs.')
+            self.rampup_scheduler = torch.optim.lr_scheduler.LinearLR(
+                self.rampup_optimizer, 
+                start_factor=0.0, 
+                end_factor=1.0, 
+                total_iters=80
+            )
 
         # Dataloader setup
         self.train_dataloader = datamodule.train_dataloader()
@@ -48,11 +66,10 @@ class SemiSupervisedEnsemble:
                 self.unlabeled_dataloader = None
         else:
             self.unlabeled_dataloader = None
+            logging.info('No unlabeled dataloader found; unsupervised training disabled.')
 
-        # Unsupervised training hyperparams
-        self.unsupervised_weight = unsupervised_weight
-        self.rampup_epochs = rampup_epochs
-        self.current_epoch = 0  # track for rampup
+        # Track current epoch
+        self.current_epoch = 0
 
         # Logging
         self.logger = logger
@@ -70,13 +87,13 @@ class SemiSupervisedEnsemble:
         for teacher_param, student_param in zip(teacher_model.parameters(), student_model.parameters()):
             teacher_param.data.mul_(alpha).add_(student_param.data, alpha=1 - alpha)
 
-    def _get_current_unsupervised_weight(self, epoch):
-        """Ramp up unsupervised weight during first rampup_epochs."""
-        if self.rampup_epochs == 0:
-            return self.unsupervised_weight
-        # Linear ramp-up
-        rampup_value = min(1.0, epoch / self.rampup_epochs)
-        return self.unsupervised_weight * rampup_value
+    def _get_current_unsupervised_weight(self):
+        """Get current unsupervised weight based on scheduler."""
+        # Get the learning rate from the rampup optimizer (which is being scheduled)
+        current_lr = self.rampup_optimizer.param_groups[0]['lr']
+        # Scale it to the max unsupervised weight and cap at max value
+        current_weight = min(current_lr, self.max_unsupervised_weight)
+        return current_weight
 
     def validate(self):
         for model in self.models:
@@ -93,6 +110,7 @@ class SemiSupervisedEnsemble:
                     preds = [teacher(x) for teacher in self.teacher_models]
                 else:
                     preds = [model(x) for model in self.models]
+                    logging.info('No teacher models available; using student predictions in validation.')
                 avg_preds = torch.stack(preds).mean(0)
                 
                 val_loss = torch.nn.functional.mse_loss(avg_preds, targets)
@@ -116,6 +134,7 @@ class SemiSupervisedEnsemble:
                     preds = [teacher(x) for teacher in self.teacher_models]
                 else:
                     preds = [model(x) for model in self.models]
+                    logging.info('No teacher models available; using student predictions in test.')
                 avg_preds = torch.stack(preds).mean(0)
                 
                 test_loss = torch.nn.functional.mse_loss(avg_preds, targets)
@@ -127,7 +146,7 @@ class SemiSupervisedEnsemble:
         #self.logger.log_dict()
         for epoch in (pbar := tqdm(range(1, total_epochs + 1))):
             self.current_epoch = epoch
-            current_unsup_weight = self._get_current_unsupervised_weight(epoch)
+            current_unsup_weight = self._get_current_unsupervised_weight()
             
             for model in self.models:
                 model.train()
@@ -187,6 +206,7 @@ class SemiSupervisedEnsemble:
                         self._update_ema_model(student, teacher, self.ema_decay)
                         
             self.scheduler.step()
+            self.rampup_scheduler.step()  # Step the rampup scheduler
             supervised_losses_logged = np.mean(supervised_losses_logged)
             if len(unsupervised_losses_logged) > 0:
                 unsupervised_losses_logged = np.mean(unsupervised_losses_logged)
@@ -196,6 +216,7 @@ class SemiSupervisedEnsemble:
             summary_dict = {
                 "supervised_loss": supervised_losses_logged,
                 "unsupervised_loss": unsupervised_losses_logged,
+                "unsupervised_weight": current_unsup_weight,
                 "epochs": epoch,
             }
 
