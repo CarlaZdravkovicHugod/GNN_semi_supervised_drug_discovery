@@ -23,4 +23,4 @@
 # activate environment ...
 source .venv/bin/activate
 export WAND_PROJECT_NAME="carlahugod-danmarks-tekniske-universitet-dtu/GNN_semi_supervised"
-PYTHONPATH="." python src/run.py --model=gcn3
+PYTHONPATH="." python src/run.py model=gcn5

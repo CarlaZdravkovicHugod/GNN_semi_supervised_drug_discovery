@@ -1,0 +1,9 @@
+defaults:
+  - _self_
+
+name: gcn11_weight_scheduler
+
+init:
+  _target_: models.GCN11
+  _partial_: false
+  num_node_features: 11

@@ -233,3 +233,9 @@ class SemiSupervisedEnsemble:
 # This is because our features and labels are all in different magnitudes. 
 # Our weights need to move far to get into the right order of magnitude and 
 # then need to fine-tune a little. Thus, we start at high learning rate and decrease.
+
+# TODO: try different layers and arcitectures
+# TODO: different optimizers and shcedulers
+# TODO: hyperparameter tuning
+# TODO regularization techniques
+# TODO: investigate changing generated features from the dataloader
