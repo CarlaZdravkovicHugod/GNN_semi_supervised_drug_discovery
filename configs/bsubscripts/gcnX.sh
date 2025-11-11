@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# A100 GPU queue, there is also gpua40 and gpua10
-#BSUB -q gpua100
+# A100 GPU queue, there is also gpua40 and gpua10, a100, v100
+#BSUB -q gpuv100
 
 # job name
 #BSUB -J GCNX_HPC

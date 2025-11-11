@@ -380,6 +380,9 @@ class GCN11(torch.nn.Module):
         x = self.conv5(x, edge_index)
         x = F.relu(x)
 
+        x = self.AGNconv(x, edge_index)
+        x = F.relu(x)
+
         # Readout to graph-level representation
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
 
