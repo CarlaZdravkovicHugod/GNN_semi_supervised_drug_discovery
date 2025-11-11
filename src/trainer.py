@@ -100,6 +100,29 @@ class SemiSupervisedEnsemble:
         val_loss = np.mean(val_losses)
         return {"val_MSE": val_loss}
 
+    def test(self):
+        """Evaluate the model on the test dataset after training is complete."""
+        for model in self.models:
+            model.eval()
+
+        test_losses = []
+        
+        with torch.no_grad():
+            for x, targets in self.test_dataloader:
+                x, targets = x.to(self.device), targets.to(self.device)
+                
+                # Ensemble prediction (use teacher if available, otherwise student)
+                if self.use_mean_teacher and self.teacher_models is not None:
+                    preds = [teacher(x) for teacher in self.teacher_models]
+                else:
+                    preds = [model(x) for model in self.models]
+                avg_preds = torch.stack(preds).mean(0)
+                
+                test_loss = torch.nn.functional.mse_loss(avg_preds, targets)
+                test_losses.append(test_loss.item())
+        test_loss = np.mean(test_losses)
+        return {"test_MSE": test_loss}
+
     def train(self, total_epochs, validation_interval):
         #self.logger.log_dict()
         for epoch in (pbar := tqdm(range(1, total_epochs + 1))):
@@ -189,7 +212,3 @@ class SemiSupervisedEnsemble:
 # This is because our features and labels are all in different magnitudes. 
 # Our weights need to move far to get into the right order of magnitude and 
 # then need to fine-tune a little. Thus, we start at high learning rate and decrease.
-
-# TODO: Run on test data as well, ie test on testdata. 
-# TODO: add unsupervised loss component as well. Fx mean teacher
-# TODO: dataset uyamæ qm9 choose predicting variable
