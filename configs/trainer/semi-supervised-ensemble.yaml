@@ -4,9 +4,12 @@ defaults:
 method: semi-supervised-ensemble
 
 train:
-  total_epochs: 400
+  total_epochs: 4000
   validation_interval: 10
-
+  unsupervised_weight: 1.0  # Weight for unsupervised consistency loss (default enabled)
+  use_mean_teacher: true     # Use Mean Teacher (EMA teacher models) for pseudo-labels
+  ema_decay: 0.999           # EMA decay rate for teacher model updates
+  rampup_epochs: 80          # Number of epochs to ramp up unsupervised_weight from 0 to full value
 init:
   _target_: trainer.SemiSupervisedEnsemble
   supervised_criterion:
@@ -21,10 +24,3 @@ init:
     _partial_: true
     step_size: 100 # TODO: change 6
     gamma: 0.95 # TODO: change 7
-  # Semi-supervised / Mean Teacher hyperparameters
-  unsupervised_weight: 1.0  # Weight for unsupervised consistency loss (default enabled)
-  use_mean_teacher: true     # Use Mean Teacher (EMA teacher models) for pseudo-labels
-  ema_decay: 0.999           # EMA decay rate for teacher model updates
-  rampup_epochs: 80          # Number of epochs to ramp up unsupervised_weight from 0 to full value
-
-    
