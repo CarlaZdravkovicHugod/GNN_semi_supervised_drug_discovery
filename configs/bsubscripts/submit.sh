@@ -1,19 +1,19 @@
 #!/bin/sh
 
-# V100 GPU queue, there is also gpua40 and gpua10
+# A100 GPU queue, there is also gpua40 and gpua10, a100, v100
 #BSUB -q gpuv100
 
 # job name
-#BSUB -J GCN3_HPC
+#BSUB -J GRAPH_SAGE_16
 
-# 4 cpus, 1 machine, 1 gpu, 24 hours (the max)
+# 4 cpus, 1 machine, 1 gpu, 12 hours (the max is 24)
 #BSUB -n 4
 #BSUB -R "span[hosts=1]"
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -W 6:00
+#BSUB -W 12:00
 
 # at least 32 GB RAM
-#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "rusage[mem=32GB]"
 
 # stdout/stderr files for debugging (%J is substituted for job ID)
 #BSUB -o logs/my_run_%J.out
@@ -23,5 +23,4 @@
 # activate environment ...
 source .venv/bin/activate
 export WAND_PROJECT_NAME="carlahugod-danmarks-tekniske-universitet-dtu/GNN_semi_supervised"
-export WANDB_API_KEY='c2965a6c460753628c9a1c3073ba07c83071c161'
-PYTHONPATH="." python src/run.py --model=gcn3
+PYTHONPATH="." python src/run.py model=graphsage16
