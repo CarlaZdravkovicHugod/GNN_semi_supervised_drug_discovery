@@ -13,14 +13,13 @@ init:
   optimizer:
     _target_: torch.optim.AdamW
     _partial_: true
-    lr: 0.001 # TODO: change 4
-    weight_decay: 0.005 # TODO: change 5
+    lr: 0.001
+    weight_decay: 0.01  # Increased weight decay for better regularization
   scheduler:
-    _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    _target_: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
     _partial_: true
-    step_size: 30 # TODO: change 6
-    gamma: 0.95 # TODO: change 7
-    T_max: 1500  # Max iterations (should match total_epochs or be set for warm restarts)
+    T_0: 100  # Restart every 100 epochs
+    T_mult: 2  # Double the restart period after each restart
     eta_min: 0.00001  # Minimum learning rate
   rampup_scheduler:
     _target_: torch.optim.lr_scheduler.StepLR

@@ -1,0 +1,11 @@
+defaults:
+  - _self_
+
+name: gat14
+
+init:
+  _target_: models.GAT14
+  _partial_: false
+  num_node_features: 11
+  hidden_channels: 64
+  heads: 4
