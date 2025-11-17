@@ -11,7 +11,7 @@ init:
   supervised_criterion:
     _target_: torch.nn.MSELoss
   optimizer:
-    _target_: torch.optim.AdamW
+    _target_: torch.optim.Adam # TRY SGD, ASGD
     _partial_: true
     lr: 0.001 # TODO: change 4
     weight_decay: 0.005 # TODO: change 5
