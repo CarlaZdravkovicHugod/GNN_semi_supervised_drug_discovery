@@ -1,0 +1,9 @@
+defaults:
+  - _self_
+
+name: gcn12
+
+init:
+  _target_: models.GCN12
+  _partial_: false
+  num_node_features: 11

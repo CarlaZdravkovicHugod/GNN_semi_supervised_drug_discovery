@@ -4,6 +4,7 @@ import hydra
 import torch
 from omegaconf import OmegaConf
 
+import logger
 from utils import seed_everything
 
 
@@ -38,7 +39,11 @@ def main(cfg):
 
     results = trainer.train(**cfg.trainer.train)
     results = torch.Tensor(results)
-
+    
+    # Evaluate on test set after training is complete
+    test_metrics = trainer.test()
+    print(f"\nFinal Test Results: {test_metrics}")
+    logger.log_dict(test_metrics)
 
 
 if __name__ == "__main__":
