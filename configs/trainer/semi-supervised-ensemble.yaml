@@ -11,7 +11,7 @@ init:
   supervised_criterion:
     _target_: torch.nn.MSELoss
   optimizer:
-    _target_: torch.optim.Adam # TRY SGD, ASGD
+    _target_: torch.optim.AdamW
     _partial_: true
     lr: 0.001 # TODO: change 4
     weight_decay: 0.005 # TODO: change 5
@@ -23,8 +23,8 @@ init:
   rampup_scheduler:
     _target_: torch.optim.lr_scheduler.StepLR
     _partial_: true
-    step_size: 30  # Increase unsupervised weight every 20 epochs
-    gamma: 1.2     # Multiply by 1.5 each step (will be capped at unsupervised_weight)
+    step_size: 30  
+    gamma: 1.2
 
   unsupervised_weight: 1.0  # Weight for unsupervised consistency loss (default enabled)
   use_mean_teacher: true     # Use Mean Teacher (EMA teacher models) for pseudo-labels

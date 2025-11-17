@@ -1,9 +1,9 @@
 defaults:
   - _self_
 
-name: gcn11
+name: gat14
 
 init:
-  _target_: models.GCN11
+  _target_: models.GAT14
   _partial_: false
   num_node_features: 11

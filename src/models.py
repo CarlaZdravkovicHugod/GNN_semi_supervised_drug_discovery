@@ -441,3 +441,154 @@ class GCN12(torch.nn.Module):
         x = self.linear(x)
 
         return x
+    
+class GCN13(torch.nn.Module):
+    def __init__(self, num_node_features, hidden_channels=128):
+        super(GCN13, self).__init__()
+        
+        # Initial projection
+        self.conv1 = GCNConv(num_node_features, hidden_channels)
+        self.bn1 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        # Graph conv layers with residual connections
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.bn2 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        self.conv3 = GCNConv(hidden_channels, hidden_channels)
+        self.bn3 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        self.conv4 = GCNConv(hidden_channels, hidden_channels)
+        self.bn4 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        # Multi-level readout (3x hidden_channels after concat)
+        # MLP head
+        self.fc1 = torch.nn.Linear(hidden_channels * 3, hidden_channels * 2)
+        self.bn_fc1 = torch.nn.BatchNorm1d(hidden_channels * 2)
+        
+        self.fc2 = torch.nn.Linear(hidden_channels * 2, hidden_channels)
+        self.bn_fc2 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        self.fc3 = torch.nn.Linear(hidden_channels, 1)
+        
+        self.dropout = 0.3
+        
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        
+        # Layer 1
+        x = self.conv1(x, edge_index)
+        x = self.bn1(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        
+        # Layer 2 with residual
+        identity = x
+        x = self.conv2(x, edge_index)
+        x = self.bn2(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = x + identity  # Residual connection
+        
+        # Layer 3 with residual
+        identity = x
+        x = self.conv3(x, edge_index)
+        x = self.bn3(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = x + identity
+        
+        # Layer 4 with residual
+        identity = x
+        x = self.conv4(x, edge_index)
+        x = self.bn4(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = x + identity
+        
+        # Multi-level readout: combine mean, max, and sum pooling
+        x_mean = global_mean_pool(x, batch)
+        x_max = torch_geometric.nn.global_max_pool(x, batch)
+        x_sum = torch_geometric.nn.global_add_pool(x, batch)
+        x = torch.cat([x_mean, x_max, x_sum], dim=1)
+        
+        # MLP head
+        x = self.fc1(x)
+        x = self.bn_fc1(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        
+        x = self.fc2(x)
+        x = self.bn_fc2(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        
+        x = self.fc3(x)
+        
+        return x
+    
+
+from torch_geometric.nn import GATConv
+
+class GAT14(torch.nn.Module):
+    """
+    Graph Attention Network with multi-head attention,
+    residual connections, and robust readout
+    """
+    def __init__(self, num_node_features, hidden_channels=64, heads=4):
+        super(GAT14, self).__init__()
+        
+        # GAT layers with multi-head attention
+        self.conv1 = GATConv(num_node_features, hidden_channels, heads=heads, dropout=0.3)
+        self.bn1 = torch.nn.BatchNorm1d(hidden_channels * heads)
+        
+        self.conv2 = GATConv(hidden_channels * heads, hidden_channels, heads=heads, dropout=0.3)
+        self.bn2 = torch.nn.BatchNorm1d(hidden_channels * heads)
+        
+        self.conv3 = GATConv(hidden_channels * heads, hidden_channels, heads=1, dropout=0.3)
+        self.bn3 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        # MLP head with multi-level pooling
+        self.fc1 = torch.nn.Linear(hidden_channels * 3, hidden_channels * 2)
+        self.bn_fc1 = torch.nn.BatchNorm1d(hidden_channels * 2)
+        
+        self.fc2 = torch.nn.Linear(hidden_channels * 2, hidden_channels)
+        self.bn_fc2 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        self.fc3 = torch.nn.Linear(hidden_channels, 1)
+        
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        
+        # GAT layers
+        x = self.conv1(x, edge_index)
+        x = self.bn1(x)
+        x = F.elu(x)
+        
+        x = self.conv2(x, edge_index)
+        x = self.bn2(x)
+        x = F.elu(x)
+        
+        x = self.conv3(x, edge_index)
+        x = self.bn3(x)
+        x = F.elu(x)
+        
+        # Multi-level readout
+        x_mean = global_mean_pool(x, batch)
+        x_max = torch_geometric.nn.global_max_pool(x, batch)
+        x_sum = torch_geometric.nn.global_add_pool(x, batch)
+        x = torch.cat([x_mean, x_max, x_sum], dim=1)
+        
+        # MLP head
+        x = self.fc1(x)
+        x = self.bn_fc1(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=0.4, training=self.training)
+        
+        x = self.fc2(x)
+        x = self.bn_fc2(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=0.3, training=self.training)
+        
+        x = self.fc3(x)
+        
+        return x
