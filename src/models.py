@@ -350,7 +350,51 @@ class GCN10(torch.nn.Module):
 
         return x
     
+class GCN11(torch.nn.Module):
+    def __init__(self, num_node_features, hidden_channels=64):
+        super(GCN11, self).__init__()
+        self.conv1 = GCNConv(num_node_features, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.conv3 = GCNConv(hidden_channels, hidden_channels)
+        self.conv4 = GCNConv(hidden_channels, hidden_channels)
+        self.conv5 = GCNConv(hidden_channels, hidden_channels)
+        self.AGNconv1 = AGNNConv(hidden_channels)
+        self.AGNconv2 = AGNNConv(hidden_channels)
+        self.linear = torch.nn.Linear(hidden_channels, 1)
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
 
+        # Apply graph convolutions at the node level (keep node structure)
+        x = self.conv1(x, edge_index)
+        x = F.tanh(x)
+
+        x = self.conv2(x, edge_index)
+        x = F.tanh(x)
+
+        x = self.conv3(x, edge_index)
+        x = F.tanh(x)
+
+        x = self.conv4(x, edge_index)
+        x = F.tanh(x)
+
+        x = self.conv5(x, edge_index)
+        x = F.tanh(x)
+
+        x = self.AGNconv1(x, edge_index)
+        x = F.tanh(x)
+        x = self.AGNconv2(x, edge_index)
+        x = F.tanh(x)
+
+        # Readout to graph-level representation
+        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+
+        x = F.layer_norm(x, x.size()[1:])
+
+        # Final classifier
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = self.linear(x)
+
+        return x
 
 class GCN12(torch.nn.Module):
     def __init__(self, num_node_features, hidden_channels=64):
