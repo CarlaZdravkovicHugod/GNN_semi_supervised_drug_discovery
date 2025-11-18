@@ -894,3 +894,37 @@ class GCN18(torch.nn.Module):
         x = self.linear(x)
         
         return x
+   
+class GCN19(torch.nn.Module):
+    def __init__(self, num_node_features, hidden_channels=128):
+        super(GCN19, self).__init__()
+        self.conv1 = GCNConv(num_node_features, hidden_channels)
+        self.bn1 = torch.nn.BatchNorm1d(hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.bn2 = torch.nn.BatchNorm1d(hidden_channels)
+        self.conv3 = GCNConv(hidden_channels, hidden_channels)
+        self.bn3 = torch.nn.BatchNorm1d(hidden_channels)
+        self.linear = torch.nn.Linear(hidden_channels, 1)
+        self.dropout = 0.5
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+       
+        x = self.conv1(x, edge_index)
+        x = self.bn1(x)
+        x = F.relu(x)
+
+        x = self.conv2(x, edge_index)
+        x = self.bn2(x)
+        x = F.relu(x)
+        
+        x = self.conv3(x, edge_index)
+        x = self.bn3(x)
+        x = F.relu(x)
+        
+        x = global_mean_pool(x, batch)
+        
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.linear(x)
+        
+        return x
+   # Try 18 without dropout at every layer

@@ -1,0 +1,10 @@
+defaults:
+  - _self_
+
+name: gcn19
+
+init:
+  _target_: models.GCN19
+  _partial_: false
+  num_node_features: 11
+  hidden_channels: 128
