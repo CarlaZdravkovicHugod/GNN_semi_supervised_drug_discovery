@@ -837,3 +837,60 @@ class GCN17(torch.nn.Module):
         x = self.linear(x)
 
         return x
+
+
+class GCN18(torch.nn.Module):
+    """
+    GCN with broader layers (128 channels), batch normalization, 
+    dropout, 3 GCN layers, and multi-level pooling (mean, max, sum).
+    """
+    def __init__(self, num_node_features, hidden_channels=128):
+        super(GCN18, self).__init__()
+        
+        # 3 GCN layers
+        self.conv1 = GCNConv(num_node_features, hidden_channels)
+        self.bn1 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.bn2 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        self.conv3 = GCNConv(hidden_channels, hidden_channels)
+        self.bn3 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        # Linear layer for final prediction (3x hidden_channels due to concat pooling)
+        self.linear = torch.nn.Linear(hidden_channels * 3, 1)
+        
+        self.dropout = 0.5
+        
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        
+        # Layer 1
+        x = self.conv1(x, edge_index)
+        x = self.bn1(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        
+        # Layer 2
+        x = self.conv2(x, edge_index)
+        x = self.bn2(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        
+        # Layer 3
+        x = self.conv3(x, edge_index)
+        x = self.bn3(x)
+        x = F.relu(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        
+        # Multi-level pooling: combine mean, max, and sum pooling
+        x_mean = global_mean_pool(x, batch)
+        x_max = torch_geometric.nn.global_max_pool(x, batch)
+        x_sum = torch_geometric.nn.global_add_pool(x, batch)
+        x = torch.cat([x_mean, x_max, x_sum], dim=1)
+        
+        # Final classifier
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.linear(x)
+        
+        return x
