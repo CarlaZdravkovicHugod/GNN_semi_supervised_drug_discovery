@@ -1,4 +1,3 @@
-
 from itertools import chain
 import hydra
 import torch
@@ -29,6 +28,20 @@ def main(cfg):
     logger.init_run(hparams)
 
     dm = hydra.utils.instantiate(cfg.dataset.init)
+
+    # Print a random sample from the dataloader
+    print("\n" + "="*60)
+    print("INSPECTING FIRST SAMPLE FROM TRAIN DATALOADER")
+    print("="*60)
+    
+    train_loader = dm.train_dataloader(shuffle=False)
+    batch, targets = next(iter(train_loader))
+    
+    # shape info
+    print(f"First sample node features size: {batch[0].x.size()}")
+    print(f"First sample node features (x):\n{batch[0].x}")
+    print(f"\nFirst sample target: {targets[0].item():.6f}")
+    print("="*60 + "\n")
 
     model = hydra.utils.instantiate(cfg.model.init).to(device)
 

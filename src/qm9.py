@@ -6,8 +6,8 @@ import pytorch_lightning as pl
 import torch
 from torch_geometric.data import Data
 from torch_geometric.datasets import QM9
-from torch_geometric.transforms import BaseTransform
-from qm9_utils import DataLoader, GetTarget
+from torch_geometric.transforms import BaseTransform, Compose
+from qm9_utils import DataLoader, GetTarget, RemoveAtomicNumber
 
 class QM9DataModule(pl.LightningDataModule):
     def __init__(
@@ -55,7 +55,12 @@ class QM9DataModule(pl.LightningDataModule):
         QM9(root=self.data_dir)
 
     def setup(self, stage: str | None = None) -> None:
-        dataset = QM9(root=self.data_dir, transform=GetTarget(self.target))
+        # Compose transforms of remove atomic number and get target
+        transform = Compose([RemoveAtomicNumber(), GetTarget(self.target)])
+        
+        dataset = QM9(root=self.data_dir, transform=transform)
+
+        # dataset = QM9(root=self.data_dir, transform=GetTarget(self.target))
 
         # Shuffle dataset
         rng = np.random.default_rng(seed=self.seed)

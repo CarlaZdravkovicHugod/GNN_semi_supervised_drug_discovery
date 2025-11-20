@@ -3,6 +3,8 @@ import logging
 import numpy as np
 import torch
 from tqdm import tqdm
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="torch.optim.lr_scheduler")
 
 class SemiSupervisedEnsemble:
     def __init__(
@@ -30,6 +32,17 @@ class SemiSupervisedEnsemble:
         else:
             self.teacher_models = None
             logging.info('Mean Teacher not used')
+
+        print(f"Using device: {self.device}")
+
+        # move models to device
+        for model in self.models:
+            model.to(self.device)
+            print(model)
+        if self.use_mean_teacher and self.teacher_models is not None:
+            for teacher in self.teacher_models:
+                teacher.to(self.device)
+                print(teacher)
 
         # Optim related things
         self.supervised_criterion = supervised_criterion
@@ -170,10 +183,7 @@ class SemiSupervisedEnsemble:
                 loss = supervised_loss
 
                 # Optional unsupervised pseudo-labeling / consistency loss with Mean Teacher
-                if (
-                    self.unlabeled_dataloader is not None
-                    and current_unsup_weight > 0.0
-                ):
+                if (self.unlabeled_dataloader is not None and current_unsup_weight > 0.0):
                     try:
                         xu, _ = next(unlabeled_iter)
                     except StopIteration:

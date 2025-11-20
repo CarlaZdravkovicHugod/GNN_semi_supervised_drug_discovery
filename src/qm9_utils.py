@@ -25,6 +25,15 @@ class GetTarget(BaseTransform):
             data.y = data.y[:, self.target]
         return data
 
+class RemoveAtomicNumber(BaseTransform):
+    """Remove atomic_number column (column 5) from node features."""
+    
+    def forward(self, data: Data) -> Data:
+        if data.x is not None:
+            # Keep columns 0-4 (H,C,N,O,F one-hot) and 6-10 (aromatic, sp, sp2, sp3, num_hydrogens)
+            data.x = torch.cat([data.x[:, :5], data.x[:, 6:]], dim=1)
+        return data
+
 class Collater:
     def __init__(
         self,
