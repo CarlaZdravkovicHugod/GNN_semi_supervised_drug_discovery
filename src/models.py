@@ -928,3 +928,7 @@ class GCN19(torch.nn.Module):
         
         return x
    # Try 18 without dropout at every layer
+
+
+   # Set runs i gang igen med gode runs. 
+   # 

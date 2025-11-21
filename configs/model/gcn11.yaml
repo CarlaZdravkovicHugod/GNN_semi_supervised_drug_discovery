@@ -6,4 +6,4 @@ name: gcn11
 init:
   _target_: models.GCN11
   _partial_: false
-  num_node_features: 11
+  num_node_features: 10
