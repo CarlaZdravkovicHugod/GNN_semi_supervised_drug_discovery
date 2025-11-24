@@ -16,12 +16,10 @@ init:
     lr: 0.001 # TODO: change 4
     weight_decay: 0.005 # TODO: change 5
   scheduler:
-    _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    _target_: torch.optim.lr_scheduler.StepLR
     _partial_: true
-    # step_size: 30 # TODO: change 6
-    # gamma: 0.95 # TODO: change 7
-    T_max: 2000  # Max iterations (should match total_epochs or be set for warm restarts)
-    eta_min: 0.00001  # Minimum learning rate
+    step_size: 30 # TODO: change 6
+    gamma: 0.95 # TODO: change 7
   rampup_scheduler:
     _target_: torch.optim.lr_scheduler.StepLR
     _partial_: true
