@@ -1,9 +1,9 @@
 from itertools import chain
+import os
 import hydra
 import torch
 from omegaconf import OmegaConf
 
-import logger
 from utils import seed_everything
 
 
@@ -52,10 +52,24 @@ def main(cfg):
 
     trainer.train(**cfg.trainer.train)
     
+    # Save the best checkpoint to file
+    checkpoint_dir = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, "checkpoints")
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_path = os.path.join(checkpoint_dir, "best_model.pt")
+    trainer.save_best_checkpoint_to_file(checkpoint_path)
+    
     # Evaluate on test set after training is complete
     test_metrics = trainer.test()
     print(f"\nFinal Test Results: {test_metrics}")
     logger.log_dict(test_metrics)
+    
+    # Also log the best validation metrics with the test results
+    if trainer.best_model_state is not None:
+        print(f"Best Validation MSE: {trainer.best_val_mse:.6f} at epoch {trainer.best_epoch}")
+        logger.log_dict({
+            'best_val_MSE': trainer.best_val_mse,
+            'best_epoch': trainer.best_epoch
+        })
 
 
 if __name__ == "__main__":

@@ -84,6 +84,11 @@ class SemiSupervisedEnsemble:
         # Track current epoch
         self.current_epoch = 0
 
+        # Best model checkpoint tracking
+        self.best_val_mse = float('inf')
+        self.best_epoch = 0
+        self.best_model_state = None
+
         # Logging
         self.logger = logger
 
@@ -99,6 +104,51 @@ class SemiSupervisedEnsemble:
         """Update teacher model parameters using EMA from student model."""
         for teacher_param, student_param in zip(teacher_model.parameters(), student_model.parameters()):
             teacher_param.data.mul_(alpha).add_(student_param.data, alpha=1 - alpha)
+
+    def _save_checkpoint(self, epoch, val_mse):
+        """Save checkpoint of all models when a new best validation MSE is achieved."""
+        checkpoint = {
+            'epoch': epoch,
+            'val_mse': val_mse,
+            'student_models': [model.state_dict() for model in self.models],
+            'optimizer_state': self.optimizer.state_dict(),
+            'scheduler_state': self.scheduler.state_dict(),
+        }
+        
+        if self.use_mean_teacher and self.teacher_models is not None:
+            checkpoint['teacher_models'] = [teacher.state_dict() for teacher in self.teacher_models]
+        
+        self.best_model_state = checkpoint
+        self.best_val_mse = val_mse
+        self.best_epoch = epoch
+        
+        logging.info(f"New best validation MSE: {val_mse:.6f} at epoch {epoch}")
+    
+    def save_best_checkpoint_to_file(self, filepath):
+        """Save the best checkpoint to a file."""
+        if self.best_model_state is not None:
+            torch.save(self.best_model_state, filepath)
+            logging.info(f"Best checkpoint saved to {filepath}")
+        else:
+            logging.warning("No best checkpoint available to save")
+    
+    def load_checkpoint(self, filepath):
+        """Load a checkpoint from file."""
+        checkpoint = torch.load(filepath, map_location=self.device)
+        
+        for i, model in enumerate(self.models):
+            model.load_state_dict(checkpoint['student_models'][i])
+        
+        if 'teacher_models' in checkpoint and self.use_mean_teacher and self.teacher_models is not None:
+            for i, teacher in enumerate(self.teacher_models):
+                teacher.load_state_dict(checkpoint['teacher_models'][i])
+        
+        self.optimizer.load_state_dict(checkpoint['optimizer_state'])
+        self.scheduler.load_state_dict(checkpoint['scheduler_state'])
+        self.best_val_mse = checkpoint['val_mse']
+        self.best_epoch = checkpoint['epoch']
+        
+        logging.info(f"Checkpoint loaded from {filepath} (epoch {checkpoint['epoch']}, val_MSE: {checkpoint['val_mse']:.6f})")
 
     def _get_current_unsupervised_weight(self):
         """Get current unsupervised weight based on scheduler."""
@@ -235,7 +285,25 @@ class SemiSupervisedEnsemble:
                 val_metrics = self.validate()
                 summary_dict.update(val_metrics)
                 pbar.set_postfix(summary_dict)
+                
+                # Check if this is the best validation MSE so far
+                current_val_mse = val_metrics['val_MSE']
+                if current_val_mse < self.best_val_mse:
+                    self._save_checkpoint(epoch, current_val_mse)
+                    summary_dict['best_val_MSE'] = self.best_val_mse
+                    summary_dict['best_epoch'] = self.best_epoch
+            
             self.logger.log_dict(summary_dict, step=epoch)
+        
+        # Log final best checkpoint information
+        if self.best_model_state is not None:
+            logging.info(f"\n{'='*60}")
+            logging.info(f"Training completed. Best validation MSE: {self.best_val_mse:.6f} at epoch {self.best_epoch}")
+            logging.info(f"{'='*60}\n")
+            self.logger.log_dict({
+                'final_best_val_MSE': self.best_val_mse,
+                'final_best_epoch': self.best_epoch
+            })
 
 
 # Notes: 
