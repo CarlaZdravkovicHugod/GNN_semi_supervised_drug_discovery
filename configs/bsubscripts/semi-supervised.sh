@@ -23,4 +23,4 @@
 # activate environment ...
 source .venv/bin/activate
 export WAND_PROJECT_NAME="carlahugod-danmarks-tekniske-universitet-dtu/GNN_semi_supervised"
-PYTHONPATH="." python src/run.py model=gcn5
+PYTHONPATH="." python src/run.py model=gcn5 +init.optimizer.weight_decay=0.001 model.name=gcn5_weightdecay_0.001

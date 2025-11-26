@@ -203,29 +203,36 @@ if __name__ == "__main__":
         "batch_size": {
             "mmqqrlk0": "BatchSize=256",
             "yq0bj14f": "BatchSize=256 (v2)",
-            "oa94im9q": "BatchSize=128 ✓",
-            "ksn7m63w": "BatchSize=32",
+            "oa94im9q": "BatchSize=128 ✓", # chosen
+            "ksn7m63w": "BatchSize=32",  # original
         },
         "optimizer": {
             "q8gn8kjz": "SGD",
             "ga5tap4x": "Adam",
-            "ksn7m63w": "AdamW ✓",
+            "ksn7m63w": "AdamW ✓", # chosen, original
         },
         "step_size": {
             "ry3assq4": "StepSize=15",
-            "1p0ybtbs": "StepSize=50 ✓",
+            "1p0ybtbs": "StepSize=50 ✓", # chosen
             "jvojfqad": "StepSize=100",
-            "xg6d6f3r": "StepSize=30",
+            "xg6d6f3r": "StepSize=30", # original
         },
         "gamma": {
-            "dix84z7q": "Gamma=0.9 ✓",
+            "dix84z7q": "Gamma=0.9 ✓", # chosen
             "1e4a01uw": "Gamma=0.8",
-            "dge2yakd": "Gamma=0.95",
-            # "sss": "Gamma=0.5",  # Invalid run ID, commented out
+            "dge2yakd": "Gamma=0.95", #original
+            "gxcjjmk6": "Gamma=0.5",
+        },
+        "weight_decay": {
+            "vgnrrgde": "WeightDecay=0.001",
+            "rm89vs07": "WeightDecay=0.005", # original
+            "zy0svipu": "WeightDecay=0.01",
+            "dryvpzjd": "WeightDecay=0.05", # Chosen
         }
     }
     
     # Add baseline to all groups for comparison
+    # TODO make new baseline run
     baseline_id = "7mf0yc3s"
     baseline_label = "Baseline"
     for category in run_groups:
