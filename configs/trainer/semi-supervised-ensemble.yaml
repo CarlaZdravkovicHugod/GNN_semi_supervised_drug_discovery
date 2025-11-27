@@ -13,8 +13,8 @@ init:
   optimizer:
     _target_: torch.optim.AdamW
     _partial_: true
-    lr: 0.001 # TODO: change 4
-    weight_decay: 0.05 # TODO: change 5
+    lr: 0.0001 
+    weight_decay: 0.05 
   scheduler:
     _target_: torch.optim.lr_scheduler.StepLR
     _partial_: true
@@ -23,8 +23,8 @@ init:
   rampup_scheduler:
     _target_: torch.optim.lr_scheduler.StepLR
     _partial_: true
-    step_size: 30  
-    gamma: 1.2
+    step_size: 30   # TODO
+    gamma: 1.2 # TODO
 
   unsupervised_weight: 1.0  # Weight for unsupervised consistency loss (default enabled)
   use_mean_teacher: true     # Use Mean Teacher (EMA teacher models) for pseudo-labels

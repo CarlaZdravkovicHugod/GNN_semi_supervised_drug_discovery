@@ -223,12 +223,18 @@ if __name__ == "__main__":
             "dge2yakd": "Gamma=0.95", #original
             "gxcjjmk6": "Gamma=0.5",
         },
-        "weight_decay": {
+        "lr_weight_decay": {
             "vgnrrgde": "WeightDecay=0.001",
             "rm89vs07": "WeightDecay=0.005", # original
             "zy0svipu": "WeightDecay=0.01",
             "dryvpzjd": "WeightDecay=0.05", # Chosen
-        }
+        },
+        "learning_rate": {
+            "09u2oii9": "LR=0.01",
+            "jfoy3vo8": "LR=0.001", # original
+            "b5i5csku": "LR=0.0001", # chosen
+            "blr226gg": "LR=0.00001",
+        },
     }
     
     # Add baseline to all groups for comparison
