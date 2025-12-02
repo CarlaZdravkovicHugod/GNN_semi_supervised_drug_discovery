@@ -8,6 +8,7 @@ the form (batch, y) instead of (batch).
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+import torch
 import torch.utils.data
 from torch.utils.data.dataloader import default_collate
 from torch_geometric.data import Batch, Dataset, Data

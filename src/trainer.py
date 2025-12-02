@@ -35,14 +35,17 @@ class SemiSupervisedEnsemble:
 
         print(f"Using device: {self.device}")
 
-        # move models to device
+        # move student models to device first
         for model in self.models:
             model.to(self.device)
-            print(model)
-        if self.use_mean_teacher and self.teacher_models is not None:
-            for teacher in self.teacher_models:
+
+        # now create EMA teachers as device copies
+        if self.use_mean_teacher:
+            self.teacher_models = []
+            for model in self.models:
+                teacher = self._create_ema_model(model)
                 teacher.to(self.device)
-                print(teacher)
+                self.teacher_models.append(teacher)
 
         # Optim related things
         self.supervised_criterion = supervised_criterion
@@ -315,5 +318,5 @@ class SemiSupervisedEnsemble:
 # TODO: try different layers and arcitectures
 # TODO: different optimizers and shcedulers
 # TODO: hyperparameter tuning
-# TODO regularization techniques
+# TODO: regularization techniques
 # TODO: investigate changing generated features from the dataloader

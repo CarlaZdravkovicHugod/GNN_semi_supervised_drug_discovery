@@ -7,11 +7,7 @@ from omegaconf import OmegaConf
 from utils import seed_everything
 
 
-@hydra.main(
-    config_path="../configs/",
-    config_name="run.yaml",
-    version_base=None,
-)
+@hydra.main(config_path="../configs/",config_name="run.yaml",version_base=None,)
 def main(cfg):
     # print out the full config
     print(OmegaConf.to_yaml(cfg))
