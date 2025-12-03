@@ -54,6 +54,10 @@ def main(cfg):
     checkpoint_path = os.path.join(checkpoint_dir, "best_model.pt")
     trainer.save_best_checkpoint_to_file(checkpoint_path)
     
+    # Load the best checkpoint before testing
+    print(f"\nLoading best model checkpoint from epoch {trainer.best_epoch} (val_MSE: {trainer.best_val_mse:.6f})")
+    trainer.load_checkpoint(checkpoint_path)
+    
     # Evaluate on test set after training is complete
     test_metrics = trainer.test()
     print(f"\nFinal Test Results: {test_metrics}")
