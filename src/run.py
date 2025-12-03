@@ -41,6 +41,8 @@ def main(cfg):
 
     model = hydra.utils.instantiate(cfg.model.init).to(device)
 
+    print(model)
+
     if cfg.compile_model:
         model = torch.compile(model)
     models = [model]
