@@ -21,7 +21,7 @@ class SemiSupervisedEnsemble:
         ema_decay: float = 0.999,
         rampup_scheduler=None,
     ):
-        self.device = torch.device("mps") if torch.backends.mps.is_available() else device
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.models = models
 
         # Mean Teacher: create EMA teacher models
