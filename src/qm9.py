@@ -2,9 +2,16 @@ import os
 
 import numpy as np
 import pytorch_lightning as pl
+import torch
+import random
 from torch_geometric.datasets import QM9
 from torch_geometric.transforms import Compose
 from qm9_utils import DataLoader, GetTarget, RemoveAtomicNumber
+
+def seed_worker(worker_id):
+    worker_seed = (torch.initial_seed() + worker_id) % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 class QM9DataModule(pl.LightningDataModule):
     def __init__(
@@ -48,6 +55,9 @@ class QM9DataModule(pl.LightningDataModule):
 
         self.batch_size_train_labeled = None
         self.batch_size_train_unlabeled = None
+
+        self.generator = torch.Generator()
+        self.generator.manual_seed(self.seed)
 
         self.setup()  # Call setup to initialize the datasets
 
@@ -98,7 +108,9 @@ class QM9DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             shuffle=shuffle,
             pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers
+            persistent_workers=self.persistent_workers,
+            worker_init_fn=seed_worker,
+            generator=self.generator
         )
 
     def unsupervised_train_dataloader(self, shuffle=True) -> DataLoader:
