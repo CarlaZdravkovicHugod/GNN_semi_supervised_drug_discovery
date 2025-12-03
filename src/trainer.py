@@ -137,7 +137,7 @@ class SemiSupervisedEnsemble:
     
     def load_checkpoint(self, filepath):
         """Load a checkpoint from file."""
-        checkpoint = torch.load(filepath, map_location=self.device)
+        checkpoint = torch.load(filepath, map_location=self.device, weights_only=False)
         
         for i, model in enumerate(self.models):
             model.load_state_dict(checkpoint['student_models'][i])
