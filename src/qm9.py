@@ -20,6 +20,8 @@ class QM9DataModule(pl.LightningDataModule):
         data_augmentation: bool = False, # Unused but here for compatibility
         name: str = 'qm9',
         ood: bool = False,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
 
     ) -> None:
         super().__init__()
@@ -40,6 +42,9 @@ class QM9DataModule(pl.LightningDataModule):
         self.data_val = None
         self.data_test = None
         self.ood_datasets = None
+        
+        self.pin_memory = pin_memory
+        self.persistent_workers = persistent_workers
 
         self.batch_size_train_labeled = None
         self.batch_size_train_unlabeled = None
@@ -92,8 +97,8 @@ class QM9DataModule(pl.LightningDataModule):
             batch_size=self.batch_size_train_labeled,
             num_workers=self.num_workers,
             shuffle=shuffle,
-            pin_memory=True,
-            persistent_workers=True
+            pin_memory=self.pin_memory,
+            persistent_workers=self.persistent_workers
         )
 
     def unsupervised_train_dataloader(self, shuffle=True) -> DataLoader:
@@ -102,8 +107,8 @@ class QM9DataModule(pl.LightningDataModule):
             batch_size=self.batch_size_train_unlabeled,
             num_workers=self.num_workers,
             shuffle=shuffle,
-            pin_memory=True,
-            persistent_workers=True
+            pin_memory=self.pin_memory,
+            persistent_workers=self.persistent_workers
         )
 
 
@@ -113,8 +118,8 @@ class QM9DataModule(pl.LightningDataModule):
             batch_size=self.batch_size_inference,
             num_workers=self.num_workers,
             shuffle=False,
-            pin_memory=True,
-            persistent_workers=True
+            pin_memory=self.pin_memory,
+            persistent_workers=self.persistent_workers
         )
 
 
@@ -124,6 +129,6 @@ class QM9DataModule(pl.LightningDataModule):
             batch_size=self.batch_size_inference,
             num_workers=self.num_workers,
             shuffle=False,
-            pin_memory=True,
-            persistent_workers=True
+            pin_memory=self.pin_memory,
+            persistent_workers=self.persistent_workers
         )
