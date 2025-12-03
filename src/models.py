@@ -1,7 +1,8 @@
 import torch
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, global_mean_pool, DenseGCNConv, DenseGraphConv, AGNNConv, GINConv, SAGEConv, GATConv
+from torch_geometric.nn import GCNConv, global_mean_pool, DenseGCNConv, DenseGraphConv, AGNNConv, GINConv, SAGEConv, GATConv, global_add_pool, GINEConv
 import torch_geometric
+import torch.nn as nn
 
 
 class GCN(torch.nn.Module):
@@ -928,7 +929,53 @@ class GCN19(torch.nn.Module):
         
         return x
    # Try 18 without dropout at every layer
+    
+class GINE5(torch.nn.Module):
+    def __init__(self, num_node_features, edge_dim=4, hidden_channels=64):
+        super().__init__()
 
+        # Shared MLP used by GINEConv
+        def mlp():
+            return torch.nn.Sequential(
+                torch.nn.Linear(hidden_channels, hidden_channels),
+                torch.nn.ReLU(),
+                torch.nn.Linear(hidden_channels, hidden_channels),
+            )
 
-   # Set runs i gang igen med gode runs. 
-   # 
+        # First layer: project node features to hidden size
+        self.lin_in = torch.nn.Linear(num_node_features, hidden_channels)
+
+        # GINEConv layers (edge aware)
+        self.conv1 = GINEConv(mlp(), edge_dim=edge_dim)
+        self.conv2 = GINEConv(mlp(), edge_dim=edge_dim)
+        self.conv3 = GINEConv(mlp(), edge_dim=edge_dim)
+        self.conv4 = GINEConv(mlp(), edge_dim=edge_dim)
+        self.conv5 = GINEConv(mlp(), edge_dim=edge_dim)
+
+        # Final readout layer
+        self.linear = torch.nn.Linear(hidden_channels, 1)
+
+    def forward(self, data):
+        x, edge_index, edge_attr, batch = (
+            data.x, data.edge_index, data.edge_attr, data.batch
+        )
+
+        # Project input features
+        x = self.lin_in(x)
+        x = F.relu(x)
+
+        # Edge-aware conv layers
+        x = F.relu(self.conv1(x, edge_index, edge_attr))
+        x = F.relu(self.conv2(x, edge_index, edge_attr))
+        x = F.relu(self.conv3(x, edge_index, edge_attr))
+        x = F.relu(self.conv4(x, edge_index, edge_attr))
+        x = F.relu(self.conv5(x, edge_index, edge_attr))
+
+        # Pool graph representation
+        x = global_mean_pool(x, batch)
+
+        # Optional dropout (small)
+        x = F.dropout(x, p=0.5, training=self.training)
+
+        # Output
+        return self.linear(x)
