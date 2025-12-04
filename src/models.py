@@ -974,8 +974,11 @@ class GINE5(torch.nn.Module):
         # Pool graph representation
         x = global_mean_pool(x, batch)
 
-        # Optional dropout (small)
-        x = F.dropout(x, p=0.5, training=self.training)
+        # Layer norm
+        x = F.layer_norm(x, x.size()[1:])
+
+        # Dropout
+        x = F.dropout(x, p=0.3, training=self.training)
 
         # Output
         return self.linear(x)
