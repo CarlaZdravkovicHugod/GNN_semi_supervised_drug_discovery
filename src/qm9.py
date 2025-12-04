@@ -101,8 +101,7 @@ class QM9DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             shuffle=shuffle,
             pin_memory=self.pin_memory,
-            persistent_workers=self.persistent_workers,
-            generator=self.generator
+            persistent_workers=self.persistent_workers
         )
 
     def unsupervised_train_dataloader(self, shuffle=True) -> DataLoader:
