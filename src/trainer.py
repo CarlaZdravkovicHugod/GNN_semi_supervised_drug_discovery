@@ -16,10 +16,10 @@ class SemiSupervisedEnsemble:
         models,
         logger,
         datamodule,
-        unsupervised_weight: float = 0.0,
+        unsupervised_weight: float = 1.0,
         use_mean_teacher: bool = True,
         ema_decay: float = 0.999,
-        rampup_scheduler=None,
+        rampup_epochs: int = 400,  # New parameter for rampup duration
     ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.models = models
@@ -53,22 +53,10 @@ class SemiSupervisedEnsemble:
         self.optimizer = optimizer(params=all_params)
         self.scheduler = scheduler(optimizer=self.optimizer)
         
-        # Rampup scheduler for unsupervised weight
-        # Create a dummy optimizer with a single parameter to use with the scheduler
+        # Linear ramp-up scheduler for unsupervised weight from 0 to 1 over rampup_epochs
         self.max_unsupervised_weight = unsupervised_weight
-        self.current_unsup_weight_param = torch.nn.Parameter(torch.tensor(0.0))
-        self.rampup_optimizer = torch.optim.SGD([self.current_unsup_weight_param], lr=0.1)
-        if rampup_scheduler is not None:
-            self.rampup_scheduler = rampup_scheduler(optimizer=self.rampup_optimizer)
-        else:
-            # Default: linear ramp-up over 80 epochs
-            logging.info('Using default linear ramp-up scheduler for unsupervised weight over 80 epochs.')
-            self.rampup_scheduler = torch.optim.lr_scheduler.LinearLR(
-                self.rampup_optimizer, 
-                start_factor=0.0, 
-                end_factor=1.0, 
-                total_iters=80
-            )
+        self.rampup_epochs = rampup_epochs
+        logging.info(f'Using linear ramp-up for unsupervised weight from 0 to {self.max_unsupervised_weight} over {self.rampup_epochs} epochs.')
 
         # Dataloader setup
         self.train_dataloader = datamodule.train_dataloader()
@@ -154,12 +142,12 @@ class SemiSupervisedEnsemble:
         logging.info(f"Checkpoint loaded from {filepath} (epoch {checkpoint['epoch']}, val_MSE: {checkpoint['val_mse']:.6f})")
 
     def _get_current_unsupervised_weight(self):
-        """Get current unsupervised weight based on scheduler."""
-        # Get the learning rate from the rampup optimizer (which is being scheduled)
-        current_lr = self.rampup_optimizer.param_groups[0]['lr']
-        # Scale it to the max unsupervised weight and cap at max value
-        current_weight = min(current_lr, self.max_unsupervised_weight)
-        return current_weight
+        """Get current unsupervised weight based on linear ramp-up."""
+        if self.current_epoch >= self.rampup_epochs:
+            return self.max_unsupervised_weight
+        else:
+            # Linear interpolation from 0 to max_unsupervised_weight
+            return (self.current_epoch / self.rampup_epochs) * self.max_unsupervised_weight
 
     def validate(self):
         for model in self.models:
@@ -269,7 +257,7 @@ class SemiSupervisedEnsemble:
                         self._update_ema_model(student, teacher, self.ema_decay)
                         
             self.scheduler.step()
-            self.rampup_scheduler.step()  # Step the rampup scheduler
+
             supervised_losses_logged = np.mean(supervised_losses_logged)
             if len(unsupervised_losses_logged) > 0:
                 unsupervised_losses_logged = np.mean(unsupervised_losses_logged)

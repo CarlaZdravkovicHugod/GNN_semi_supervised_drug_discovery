@@ -20,12 +20,7 @@ init:
     _partial_: true
     step_size: 30
     gamma: 0.95
-  rampup_scheduler:
-    _target_: torch.optim.lr_scheduler.StepLR
-    _partial_: true
-    step_size: 30   # TODO
-    gamma: 1.2 # TODO
 
-  unsupervised_weight: 1.0  # Weight for unsupervised consistency loss (default enabled)
+  unsupervised_weight: 1.0
   use_mean_teacher: true     # Use Mean Teacher (EMA teacher models) for pseudo-labels
   ema_decay: 0.999           # EMA decay rate for teacher model updates
