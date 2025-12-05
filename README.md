@@ -10,7 +10,7 @@ Train a model using Hydra:
 python src/run.py model=gcn5
 ```
 
-Replace `gcn5` with any model defined in `configs/model/` (e.g., `gine5`, `gine5_semi`).
+Replace `gcn5` with any model defined in `configs/model/` (e.g., `gine5`, `gcn5`).
 
 
 ## Submitting Jobs on DTU HPC
